@@ -1,0 +1,72 @@
+stages:
+  - build
+  - scan
+
+variables:
+  TF_VERSION: "1.7.5"
+  ANSIBLE_VERSION: "2.16.5"
+  K8S_VERSION: "1.29.2"
+  REGISTRY_PATH: $CI_REGISTRY_IMAGE
+
+.build_template:
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+build-terraform:
+  extends: .build_template
+  stage: build
+  script:
+    - |
+      docker build \
+        --target tf-stage \
+        --build-arg TF_VER=$TF_VERSION \
+        -t $REGISTRY_PATH/tf-runner:latest \
+        -t $REGISTRY_PATH/tf-runner:$TF_VERSION \
+        -t $REGISTRY_PATH/tf-runner:$CI_COMMIT_SHORT_SHA .
+    - docker push $REGISTRY_PATH/tf-runner --all-tags
+  rules:
+    - changes:
+        - images/terraform/**/*
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+build-ansible:
+  extends: .build_template
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/ansible:latest ./images/ansible
+    - docker push $CI_REGISTRY_IMAGE/ansible:latest
+  rules:
+    - changes:
+        - images/ansible/**/*
+
+build-k8s:
+  extends: .build_template
+  stage: build
+  script:
+    - |
+      docker build \
+        --target k8s-stage \
+        --build-arg K8S_VER=$K8S_VERSION \
+        -t $REGISTRY_PATH/k8s-deployer:latest \
+        -t $REGISTRY_PATH/k8s-deployer:$K8S_VERSION \
+        -t $REGISTRY_PATH/k8s-deployer:$CI_COMMIT_SHORT_SHA .
+    - docker push $REGISTRY_PATH/k8s-deployer --all-tags
+  rules:
+    - changes:
+        - images/k8s/**/*
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+security-scan:
+  stage: scan
+  image: 
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL $REGISTRY_PATH/tf-runner:latest
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL $REGISTRY_PATH/k8s-deployer:latest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
