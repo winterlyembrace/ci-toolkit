@@ -38,6 +38,29 @@ This project uses a Smart Build approach:
     Semantic Tagging: Images are tagged with both :latest and the specific :git-sha for rollback capabilities.
 
 
+🛠️ Usage Examples
+
+GitLab CI/CD
+
+deploy-infrastructure:
+  stage: deploy
+  image: ghcr.io/winterlyembrace/ci-toolkit/tf-runner:1.7.5
+  script:
+    - terraform init
+    - terraform apply -auto-approve
+
+GitHub Actions
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/winterlyembrace/ci-toolkit/ansible-runner:2.15.9
+    steps:
+      - uses: actions/checkout@v4
+      - run: ansible-lint site.yml
+
+
 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
