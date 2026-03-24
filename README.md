@@ -1,12 +1,11 @@
 # ci-toolkit
-A collection of hardened, lightweight, and multi-stage Docker images for CI/CD pipelines (Terraform, Ansible, Kubernetes). Optimized for security (non-root) and speed (Alpine-based).
-
 
 🛠️ CI-Toolkit: High-Performance CI/CD Runtime Images
 
-This repository provides a collection of hardened, lightweight, and multi-stage Docker images designed as runtimes for CI/CD pipelines (GitLab CI, GitHub Actions, Jenkins).
+This repository provides a collection of lightweight and multi-stage Docker images optimized for security (non-root) and speed (Alpine-based) designed as runtimes for CI/CD pipelines (GitLab CI, GitHub Actions, Jenkins).
 
 By using pre-built, specialized images instead of installing dependencies during job execution, we reduce pipeline duration by 40–60% and ensure environment parity across all stages.
+
 
 🚀 Key Features
 
@@ -18,10 +17,6 @@ By using pre-built, specialized images instead of installing dependencies during
 
     Tool Ecosystem: Includes not just the core binaries (Terraform/Ansible), but also linting and security scanning tools (TFLint, TFSec, Ansible-lint).
 
-Image Name,Base,Included Tools,Use Case
-tf-runner,alpine,"Terraform, TFLint, TFSec",Infrastructure Provisioning
-ansible-runner,python-alpine,"Ansible, ansible-lint, yamllint",Configuration Management
-k8s-deployer,alpine,"kubectl, helm, sops",Kubernetes Deployment
 
 🛡️ Security & Compliance
 
@@ -33,6 +28,7 @@ To ensure production-grade security, this repository implements:
 
     Base Image Pinning: Strict versioning (e.g., python:3.12-alpine3.19) to prevent "latest-tag" drift.
 
+
 🔄 Pipeline Automation
 
 This project uses a Smart Build approach:
@@ -40,6 +36,7 @@ This project uses a Smart Build approach:
     Targeted Rebuilds: Only modified images are rebuilt using GitLab/GitHub rules:changes.
 
     Semantic Tagging: Images are tagged with both :latest and the specific :git-sha for rollback capabilities.
+
 
 📝 License
 
