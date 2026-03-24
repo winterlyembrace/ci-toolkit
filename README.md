@@ -40,17 +40,18 @@ This project uses a Smart Build approach:
 
 🛠️ Usage Examples
 
+<pre>
 GitLab CI/CD
-
 deploy-infrastructure:
   stage: deploy
   image: ghcr.io/winterlyembrace/ci-toolkit/tf-runner:1.7.5
   script:
     - terraform init
     - terraform apply -auto-approve
+</pre>
 
+<pre>
 GitHub Actions
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -59,6 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: ansible-lint site.yml
+</pre>
 
 
 📝 License
