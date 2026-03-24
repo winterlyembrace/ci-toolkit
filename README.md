@@ -40,8 +40,8 @@ This project uses a Smart Build approach:
 
 🛠️ Usage Examples
 
-<pre>
 GitLab CI/CD
+<pre>
 deploy-infrastructure:
   stage: deploy
   image: ghcr.io/winterlyembrace/ci-toolkit/tf-runner:1.7.5
@@ -50,8 +50,8 @@ deploy-infrastructure:
     - terraform apply -auto-approve
 </pre>
 
-<pre>
 GitHub Actions
+<pre>
 jobs:
   lint:
     runs-on: ubuntu-latest
