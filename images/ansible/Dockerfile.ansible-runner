@@ -8,10 +8,11 @@ RUN apk add --no-cache \
     openssl-dev
 
 WORKDIR /home/runner
+COPY requirements.txt .
 
 # Install Ansible and linters
-COPY requirements.txt .
-RUN python3 -m venv /opt/venv && pip install --no-cache-dir -r requirements.txt
+RUN python3 -m venv /opt/venv && \
+/opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 ENV PATH="/opt/venv/bin:$PATH"
 
 # --- Stage 2: Final ---
