@@ -1,0 +1,37 @@
+FROM python:3.12.2-alpine3.19 AS builder
+
+RUN apk add --no-cache curl unzip bash
+
+# 1. Install Terraform
+ARG TF_VERSION=1.7.5
+RUN curl -sLO https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip && \
+    unzip terraform_${TF_VERSION}_linux_amd64.zip && \
+    mv terraform /usr/local/bin/ && \
+    rm terraform_${TF_VERSION}_linux_amd64.zip
+
+# 2. Install TFLint
+RUN curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+# 3. Install TFSec
+RUN curl -sLO https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 && \
+    chmod +x tfsec-linux-amd64 && \
+    mv tfsec-linux-amd64 /usr/local/bin/tfsec
+
+# Final image
+FROM alpine:3.19.1
+
+# Add user without privilegies for security (rootless)
+RUN addgroup -g 1001 runner && \
+    adduser -D -u 1001 -G runner runner
+USER 1001
+WORKDIR /home/runner
+
+# Copy binaries from builder layer
+COPY --from=builder /usr/local/bin/terraform /usr/local/bin/terraform
+COPY --from=builder /usr/local/bin/tflint /usr/local/bin/tflint
+COPY --from=builder /usr/local/bin/tfsec /usr/local/bin/tfsec
+
+# Version checks for logs
+RUN terraform --version && tflint --version
+
+CMD ["/bin/sh"]
