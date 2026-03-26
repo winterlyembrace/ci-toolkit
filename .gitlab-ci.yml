@@ -13,6 +13,8 @@ variables:
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
+  tags:
+    - cluster-runner
   before_script:
     - mkdir -p /kaniko/.docker
     # Kaniko uses configuration file for auth in registry
@@ -22,6 +24,8 @@ variables:
 build-terraform-kaniko:
   extends: .kaniko_build_template
   stage: build
+  tags:
+    - cluster-runner
   script:
     - /kaniko/executor \
       --context $CI_PROJECT_DIR \
@@ -42,6 +46,8 @@ build-terraform-kaniko:
 build-ansible:
   extends: .kaniko_build_template
   stage: build
+  tags:
+    - cluster-runner
   script:
     - /kaniko/executor \
       --context $CI_PROJECT_DIR/images/ansible \
@@ -61,6 +67,8 @@ build-ansible:
 build-k8s:
   extends: .kaniko_build_template
   stage: build
+  tags:
+    - cluster-runner
   script:
     - /kaniko/executor \
       --context $CI_PROJECT_DIR \
@@ -82,6 +90,8 @@ security-scan:
   image: 
     name: aquasec/trivy:latest
     entrypoint: [""]
+  tags:
+    - cluster-runner
   variables:
     # Cache Trivy dependencies base (speed up scanning)
     TRIVY_CACHE_DIR: ".trivycache/"
