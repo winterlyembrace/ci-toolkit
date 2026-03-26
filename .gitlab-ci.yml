@@ -10,6 +10,7 @@ variables:
 
 # Use Kaniko debug version with shell because GitLab runner can not run commands in containers without shell
 .kaniko_build_template:
+  stage: build
   tags:
     - cluster-runner
   rules:
@@ -29,48 +30,48 @@ variables:
 # Build Terraform runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-terraform-kaniko:
   extends: .kaniko_build_template
-  stage: build
   script:
-    - /kaniko/executor \
-      --context $CI_PROJECT_DIR \
-      --dockerfile $CI_PROJECT_DIR/images/terraform/Dockerfile.tf-runner \
-      --target tf-stage \
-      --build-arg TF_VER=$TF_VERSION \
-      --destination $REGISTRY_PATH/tf-runner:latest \
-      --destination $REGISTRY_PATH/tf-runner:$TF_VERSION \
-      --destination $REGISTRY_PATH/tf-runner:$CI_COMMIT_SHORT_SHA \
-      --cache=true \
+    - >
+      /kaniko/executor
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/images/terraform/Dockerfile.tf-runner
+      --target tf-stage
+      --build-arg TF_VER=$TF_VERSION
+      --destination $REGISTRY_PATH/tf-runner:latest
+      --destination $REGISTRY_PATH/tf-runner:$TF_VERSION
+      --destination $REGISTRY_PATH/tf-runner:$CI_COMMIT_SHORT_SHA
+      --cache=true
       --cache-repo=$REGISTRY_PATH/tf-cache
 
 # Build Ansible runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-ansible:
   extends: .kaniko_build_template
-  stage: build
   script:
-    - /kaniko/executor \
-      --context $CI_PROJECT_DIR/images/ansible \
-      --dockerfile $CI_PROJECT_DIR/images/ansible/Dockerfile.ansible-runner \
-      --build-arg ANSIBLE_VER=$ANSIBLE_VERSION \
-      --destination $REGISTRY_PATH/ansible-runner:latest \
-      --destination $REGISTRY_PATH/ansible-runner:$ANSIBLE_VERSION \
-      --destination $REGISTRY_PATH/ansible-runner:$CI_COMMIT_SHORT_SHA \
-      --cache=true \
+    - >
+      /kaniko/executor
+      --context $CI_PROJECT_DIR/images/ansible
+      --dockerfile $CI_PROJECT_DIR/images/ansible/Dockerfile.ansible-runner
+      --build-arg ANSIBLE_VER=$ANSIBLE_VERSION
+      --destination $REGISTRY_PATH/ansible-runner:latest
+      --destination $REGISTRY_PATH/ansible-runner:$ANSIBLE_VERSION
+      --destination $REGISTRY_PATH/ansible-runner:$CI_COMMIT_SHORT_SHA
+      --cache=true
       --cache-repo=$REGISTRY_PATH/ansible-cache
 
 # Build K8s runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-k8s:
   extends: .kaniko_build_template
-  stage: build
   script:
-    - /kaniko/executor \
-      --context $CI_PROJECT_DIR \
-      --dockerfile $CI_PROJECT_DIR/images/k8s-deployer/Dockerfile.k8s-deployer \
-      --target k8s-stage \
-      --build-arg K8S_VER=$K8S_VERSION \
-      --destination $REGISTRY_PATH/k8s-deployer:latest \
-      --destination $REGISTRY_PATH/k8s-deployer:$K8S_VERSION \
-      --destination $REGISTRY_PATH/k8s-deployer:$CI_COMMIT_SHORT_SHA \
-      --cache=true \
+    - >
+      /kaniko/executor
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/images/k8s-deployer/Dockerfile.k8s-deployer
+      --target k8s-stage
+      --build-arg K8S_VER=$K8S_VERSION
+      --destination $REGISTRY_PATH/k8s-deployer:latest
+      --destination $REGISTRY_PATH/k8s-deployer:$K8S_VERSION
+      --destination $REGISTRY_PATH/k8s-deployer:$CI_COMMIT_SHORT_SHA
+      --cache=true
       --cache-repo=$REGISTRY_PATH/k8s-cache
 
 
