@@ -32,7 +32,7 @@ lint-k8s:
   extends: .lint_template
   stage: lint
   variables:
-    DOCKERFILE: "images/k8s-deployer/Dockerfile.k8s-deployer"
+    DOCKERFILE: "images/k8s/Dockerfile.k8s-deployer"
 
 lint-ansible:
   extends: .lint_template
