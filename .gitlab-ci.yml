@@ -8,25 +8,29 @@ variables:
   K8S_VERSION: "1.29.2"
   REGISTRY_PATH: $CI_REGISTRY_IMAGE
 
-.build_template:
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
+# Use debug version with shell because GitLab runner can not run commands without shell
+.kaniko_build_template:
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # Kaniko uses configuration file for auth in registry
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(printf "%s:%s" "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
 
-build-terraform:
-  extends: .build_template
+build-terraform-kaniko:
+  extends: .kaniko_build_template
   stage: build
   script:
-    - |
-      docker build \
-        --target tf-stage \
-        --build-arg TF_VER=$TF_VERSION \
-        -t $REGISTRY_PATH/tf-runner:latest \
-        -t $REGISTRY_PATH/tf-runner:$TF_VERSION \
-        -t $REGISTRY_PATH/tf-runner:$CI_COMMIT_SHORT_SHA .
-    - docker push $REGISTRY_PATH/tf-runner --all-tags
+    - /kaniko/executor \
+      --context $CI_PROJECT_DIR \
+      --dockerfile $CI_PROJECT_DIR/Dockerfile \
+      --target tf-stage \
+      --build-arg TF_VER=$TF_VERSION \
+      --destination $REGISTRY_PATH/tf-runner:latest \
+      --destination $REGISTRY_PATH/tf-runner:$TF_VERSION \
+      --destination $REGISTRY_PATH/tf-runner:$CI_COMMIT_SHORT_SHA \
+      --cache=true \
+      --cache-repo=$REGISTRY_PATH/tf-cache
   rules:
     - changes:
         - images/terraform/**/*
