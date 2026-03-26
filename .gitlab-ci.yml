@@ -9,6 +9,7 @@ variables:
   ANSIBLE_VER: "2.16.5"
   K8S_VER: "1.29.2"
   HADOLINT_VER: "2.12.0-debian"
+  TRIVY_VER: "0.49.1"
 
 # Rules template for stage trigger
 .base_rules:
@@ -117,7 +118,7 @@ build-k8s:
 .scan_template:
   stage: scan
   image: 
-    name: aquasec/trivy:latest
+    name: aquasec/trivy:${TRIVY_VER}
     entrypoint: [""]
   tags:
     - cluster-runner
