@@ -25,7 +25,7 @@ build-terraform-kaniko:
   script:
     - /kaniko/executor \
       --context $CI_PROJECT_DIR \
-      --dockerfile $CI_PROJECT_DIR/Dockerfile \
+      --dockerfile $CI_PROJECT_DIR/images/terraform/Dockerfile.tf-runner \
       --target tf-stage \
       --build-arg TF_VER=$TF_VERSION \
       --destination $REGISTRY_PATH/tf-runner:latest \
@@ -45,10 +45,11 @@ build-ansible:
   script:
     - /kaniko/executor \
       --context $CI_PROJECT_DIR/images/ansible \
-      --dockerfile $CI_PROJECT_DIR/images/ansible/Dockerfile \
+      --dockerfile $CI_PROJECT_DIR/images/ansible/Dockerfile.ansible-runner \
       --build-arg ANSIBLE_VER=$ANSIBLE_VERSION \
-      --destination $REGISTRY_PATH/ansible:latest \
-      --destination $REGISTRY_PATH/ansible:$ANSIBLE_VERSION \
+      --destination $REGISTRY_PATH/ansible-runner:latest \
+      --destination $REGISTRY_PATH/ansible-runner:$ANSIBLE_VERSION \
+      --destination $REGISTRY_PATH/ansible-runner:$CI_COMMIT_SHORT_SHA \
       --cache=true \
       --cache-repo=$REGISTRY_PATH/ansible-cache
   rules:
@@ -63,7 +64,7 @@ build-k8s:
   script:
     - /kaniko/executor \
       --context $CI_PROJECT_DIR \
-      --dockerfile $CI_PROJECT_DIR/Dockerfile \
+      --dockerfile $CI_PROJECT_DIR/images/k8s-deployer/Dockerfile.k8s-deployer \
       --target k8s-stage \
       --build-arg K8S_VER=$K8S_VERSION \
       --destination $REGISTRY_PATH/k8s-deployer:latest \

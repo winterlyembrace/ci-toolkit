@@ -1,0 +1,49 @@
+# --- Stage 1: Builder ---
+FROM alpine:3.19.1 AS builder
+
+# Semantic Versioning
+ARG KUBECTL_VERSION=1.29.2
+ARG HELM_VERSION=3.14.2
+
+RUN apk add --no-cache curl
+
+# 1. Download kubectl
+RUN curl -LO "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" && \
+    chmod +x kubectl && mv kubectl /usr/local/bin/
+
+# 2. Download Helm
+RUN curl -sLO "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" && \
+    tar -xzf helm-v${HELM_VERSION}-linux-amd64.tar.gz && \
+    mv linux-amd64/helm /usr/local/bin/ && \
+    rm -rf linux-amd64 helm-v${HELM_VERSION}-linux-amd64.tar.gz
+
+# --- Stage 2: Runtime ---
+FROM alpine:3.19.1
+
+# Install basic utilities
+RUN apk add --no-cache \
+    bash \
+    curl \
+    git \
+    openssl \
+    gettext \
+    jq
+
+# Create group and user runner (UID/GID 1001)
+RUN addgroup -g 1001 runner && \
+    adduser -D -u 1001 -G runner runner
+
+# Copy binaries from builder-layer
+COPY --from=builder /usr/local/bin/kubectl /usr/local/bin/kubectl
+COPY --from=builder /usr/local/bin/helm /usr/local/bin/helm
+
+USER 1001
+WORKDIR /home/runner
+
+# Create configuration directory
+RUN mkdir -p /home/runner/.kube
+
+# Smoke test
+RUN kubectl version --client && helm version --client
+
+CMD ["/bin/sh"]

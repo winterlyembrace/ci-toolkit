@@ -20,7 +20,7 @@ RUN curl -sLO https://github.com/aquasecurity/tfsec/releases/latest/download/tfs
 # Final image
 FROM alpine:3.19.1
 
-# Add user without privilegies for security (rootless)
+# Create group and user runner (UID/GID 1001)
 RUN addgroup -g 1001 runner && \
     adduser -D -u 1001 -G runner runner
 USER 1001
@@ -31,7 +31,7 @@ COPY --from=builder /usr/local/bin/terraform /usr/local/bin/terraform
 COPY --from=builder /usr/local/bin/tflint /usr/local/bin/tflint
 COPY --from=builder /usr/local/bin/tfsec /usr/local/bin/tfsec
 
-# Version checks for logs
+# Smoke test
 RUN terraform --version && tflint --version
 
 CMD ["/bin/sh"]

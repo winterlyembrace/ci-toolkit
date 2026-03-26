@@ -1,0 +1,31 @@
+FROM python:3.12.2-alpine3.19
+
+# Install system dependencies for work with network and SSH
+RUN apk add --no-cache \
+    openssh-client \
+    git \
+    sshpass \
+    bash
+
+# Create group and user runner (UID/GID 1001)
+RUN addgroup -g 1001 runner && \
+    adduser -D -u 1001 -G runner runner
+USER 1001
+WORKDIR /home/runner
+
+# Argument for version (Semantic Versioning)
+ARG ANSIBLE_VER=2.16.5
+
+# Install Ansible and linters
+RUN pip install --no-cache-dir --user \
+    ansible==${ANSIBLE_VER} \
+    ansible-lint \
+    yamllint
+
+# Add path to pip-binaries in user PATH
+ENV PATH="/home/runner/.local/bin:${PATH}"
+
+# Smoke test
+RUN ansible --version && ansible-lint --version
+
+CMD ["/bin/sh"]
