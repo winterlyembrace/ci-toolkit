@@ -14,7 +14,7 @@ variables:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   tags:
-    - cluster-runner
+    - cluster-runner  
   before_script:
     - mkdir -p /kaniko/.docker
     # Kaniko uses configuration file for auth in registry
@@ -24,8 +24,6 @@ variables:
 build-terraform-kaniko:
   extends: .kaniko_build_template
   stage: build
-  tags:
-    - cluster-runner
   script:
     - /kaniko/executor \
       --context $CI_PROJECT_DIR \
@@ -46,8 +44,6 @@ build-terraform-kaniko:
 build-ansible:
   extends: .kaniko_build_template
   stage: build
-  tags:
-    - cluster-runner
   script:
     - /kaniko/executor \
       --context $CI_PROJECT_DIR/images/ansible \
@@ -67,8 +63,6 @@ build-ansible:
 build-k8s:
   extends: .kaniko_build_template
   stage: build
-  tags:
-    - cluster-runner
   script:
     - /kaniko/executor \
       --context $CI_PROJECT_DIR \
