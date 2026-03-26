@@ -61,8 +61,10 @@ lint-ansible:
 
 # Build Terraform runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-terraform:
-  extends: [.build_template, .terraform_rules]
+  extends: [.build_template, .base_rules]
   needs: ["lint-terraform"]
+  variables:
+    COMPONENT: "terraform"
   script:
     - >
       /kaniko/executor
@@ -77,8 +79,10 @@ build-terraform:
 
 # Build Ansible runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-ansible:
-  extends: [.build_template, .ansible_rules]
+  extends: [.build_template, .base_rules]
   needs: ["lint-ansible"]
+  variables:
+    COMPONENT: "ansible"
   script:
     - >
       /kaniko/executor
@@ -93,8 +97,10 @@ build-ansible:
 
 # Build K8s runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-k8s:
-  extends: [.build_template, .k8s_rules]
+  extends: [.build_template, .base_rules]
   needs: ["lint-k8s"]
+  variables:
+    COMPONENT: "k8s"
   script:
     - >
       /kaniko/executor
@@ -135,18 +141,24 @@ build-k8s:
       container_scanning: "gl-container-scanning-report-$IMAGE_NAME.json"
 
 scan-terraform:
-  extends: [.scan_template, .terraform_rules]
-  variables: { IMAGE_NAME: "tf-runner" }
+  extends: [.scan_template, .base_rules]
+  variables: 
+    IMAGE_NAME: "tf-runner"
+    COMPONENT: "terraform"
   needs: ["build-terraform"]
 
 scan-ansible:
-  extends: [.scan_template, .ansible_rules]
-  variables: { IMAGE_NAME: "ansible-runner" }
+  extends: [.scan_template, .base_rules]
+  variables: 
+    IMAGE_NAME: "ansible-runner"
+    COMPONENT: "ansible"
   needs: ["build-ansible"]
 
 scan-k8s:
-  extends: [.scan_template, .k8s_rules]
-  variables: { IMAGE_NAME: "k8s-deployer" }
+  extends: [.scan_template, .base_rules]
+  variables: 
+    IMAGE_NAME: "k8s-deployer"
+    COMPONENT: "k8s"
   needs: ["build-k8s"]
 
 
