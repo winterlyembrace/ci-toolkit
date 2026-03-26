@@ -1,5 +1,8 @@
 FROM python:3.12.2-alpine3.19 AS builder
 
+# Enable pipefail option to catch errors in piped commands
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+
 RUN apk add --no-cache curl unzip bash
 
 # 1. Install Terraform

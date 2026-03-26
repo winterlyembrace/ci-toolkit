@@ -1,0 +1,4 @@
+ignored:
+
+  # Disable version pinning for apk to avoid "unsatisfied constraints" errors
+  - DL3018
