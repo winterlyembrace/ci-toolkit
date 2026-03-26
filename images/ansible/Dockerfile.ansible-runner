@@ -7,13 +7,12 @@ RUN apk add --no-cache \
     libffi-dev \
     openssl-dev
 
-# Prepare virtual environment for python packages
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+WORKDIR /home/runner
 
 # Install Ansible and linters
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python3 -m venv /opt/venv && pip install --no-cache-dir -r requirements.txt
+ENV PATH="/opt/venv/bin:$PATH"
 
 # --- Stage 2: Final ---
 FROM python:3.12.2-alpine3.19
@@ -39,7 +38,6 @@ RUN addgroup -g 1001 runner && \
 ENV PATH="/opt/venv/bin:$PATH"
 
 USER 1001
-WORKDIR /home/runner
 
 # Smoke test
 RUN ansible --version && ansible-lint --version
