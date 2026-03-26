@@ -100,7 +100,7 @@ build-k8s:
     - >
       /kaniko/executor
       --context $CI_PROJECT_DIR
-      --dockerfile $CI_PROJECT_DIR/images/k8s-deployer/Dockerfile.k8s-deployer
+      --dockerfile $CI_PROJECT_DIR/images/k8s/Dockerfile.k8s-deployer
       --target k8s-stage
       --build-arg K8S_VER=$K8S_VERSION
       --destination $REGISTRY_PATH/k8s-deployer:latest
