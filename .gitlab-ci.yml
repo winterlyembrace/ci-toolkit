@@ -29,19 +29,19 @@ variables:
     - hadolint $DOCKERFILE
 
 lint-terraform:
-  extends: [.lint_template, .terraform_rules]
+  extends: [.lint_template, .base_rules]
   variables:
     COMPONENT: "terraform"
     DOCKERFILE: "images/terraform/Dockerfile.tf-runner"
 
 lint-k8s:
-  extends: [.lint_template, .k8s_rules]
+  extends: [.lint_template, .base_rules]
   variables:
     COMPONENT: "k8s"
     DOCKERFILE: "images/k8s/Dockerfile.k8s-deployer"
 
 lint-ansible:
-  extends: [.lint_template, .ansible_rules]
+  extends: [.lint_template, .base_rules]
   variables:
     COMPONENT: "ansible"
     DOCKERFILE: "images/ansible/Dockerfile.ansible-runner"
