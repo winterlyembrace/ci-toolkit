@@ -9,6 +9,32 @@ variables:
   K8S_VER: "1.29.2"
   HADOLINT_VER: "2.12.0-debian"
 
+# Rule templates for stage trigger
+.terraform_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - images/terraform/**/*
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+.ansible_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - images/ansible/**/*
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+.k8s_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - images/k8s/**/*
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# Common template for all lint stages
 .lint_template:
   stage: lint
   image: hadolint/hadolint:v$HADOLINT_VER
@@ -16,27 +42,19 @@ variables:
     - cluster-runner
   script:
     - hadolint $DOCKERFILE
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-      changes:
-        - $DOCKERFILE
-    - if: $CI_PIPELINE_SOURCE == "web"
 
 lint-terraform:
-  extends: .lint_template
-  stage: lint
+  extends: [.lint_template, .terraform_rules]
   variables:
     DOCKERFILE: "images/terraform/Dockerfile.tf-runner"
 
 lint-k8s:
-  extends: .lint_template
-  stage: lint
+  extends: [.lint_template, .k8s_rules]
   variables:
     DOCKERFILE: "images/k8s/Dockerfile.k8s-deployer"
 
 lint-ansible:
-  extends: .lint_template
-  stage: lint
+  extends: [.lint_template, .ansible_rules]
   variables:
     DOCKERFILE: "images/ansible/Dockerfile.ansible-runner"
 
@@ -45,12 +63,6 @@ lint-ansible:
   stage: build
   tags:
     - cluster-runner
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_PIPELINE_SOURCE == "push"
-      changes:
-        - images/**/*
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -61,7 +73,7 @@ lint-ansible:
 
 # Build Terraform runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-terraform:
-  extends: .build_template
+  extends: [.build_template, .terraform_rules]
   needs: ["lint-terraform"]
   script:
     - >
@@ -69,32 +81,32 @@ build-terraform:
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/images/terraform/Dockerfile.tf-runner
       --target tf-stage
-      --build-arg TF_VER=$TF_VERSION
+      --build-arg TF_VER=$TF_VER
       --destination $REGISTRY_PATH/tf-runner:latest
-      --destination $REGISTRY_PATH/tf-runner:$TF_VERSION
+      --destination $REGISTRY_PATH/tf-runner:$TF_VER
       --destination $REGISTRY_PATH/tf-runner:$CI_COMMIT_SHORT_SHA
       --cache=true
       --cache-repo=$REGISTRY_PATH/tf-cache
 
 # Build Ansible runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-ansible:
-  extends: .build_template
+  extends: [.build_template, .ansible_rules]
   needs: ["lint-ansible"]
   script:
     - >
       /kaniko/executor
       --context $CI_PROJECT_DIR/images/ansible
       --dockerfile $CI_PROJECT_DIR/images/ansible/Dockerfile.ansible-runner
-      --build-arg ANSIBLE_VER=$ANSIBLE_VERSION
+      --build-arg ANSIBLE_VER=$ANSIBLE_VER
       --destination $REGISTRY_PATH/ansible-runner:latest
-      --destination $REGISTRY_PATH/ansible-runner:$ANSIBLE_VERSION
+      --destination $REGISTRY_PATH/ansible-runner:$ANSIBLE_VER
       --destination $REGISTRY_PATH/ansible-runner:$CI_COMMIT_SHORT_SHA
       --cache=true
       --cache-repo=$REGISTRY_PATH/ansible-cache
 
 # Build K8s runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-k8s:
-  extends: .build_template
+  extends: [.build_template, .k8s_rules]
   needs: ["lint-k8s"]
   script:
     - >
@@ -102,15 +114,15 @@ build-k8s:
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/images/k8s/Dockerfile.k8s-deployer
       --target k8s-stage
-      --build-arg K8S_VER=$K8S_VERSION
+      --build-arg K8S_VER=$K8S_VER
       --destination $REGISTRY_PATH/k8s-deployer:latest
-      --destination $REGISTRY_PATH/k8s-deployer:$K8S_VERSION
+      --destination $REGISTRY_PATH/k8s-deployer:$K8S_VER
       --destination $REGISTRY_PATH/k8s-deployer:$CI_COMMIT_SHORT_SHA
       --cache=true
       --cache-repo=$REGISTRY_PATH/k8s-cache
 
 
-security-scan:
+.scan_template:
   stage: scan
   image: 
     name: aquasec/trivy:latest
@@ -123,24 +135,30 @@ security-scan:
   cache:
     paths:
       - .trivycache/
-  parallel:
-    matrix:
-      - IMAGE_NAME: ["tf-runner", "ansible-runner", "k8s-deployer"]
   script:
     - echo "Scanning image $REGISTRY_PATH/$IMAGE_NAME:latest"
     # 1. Generate detailed report in JSON format for GitLab
     - >
       trivy image --format template --template "@/contrib/gitlab.tpl" 
-      --output gl-container-scanning-report.json 
+      --output "gl-container-scanning-report-$IMAGE_NAME.json" 
       $REGISTRY_PATH/$IMAGE_NAME:latest
     # 2. Output a brief summary to the pipeline console (for the eyes)
-    - trivy image --severity HIGH,CRITICAL $REGISTRY_PATH/$IMAGE_NAME:latest
+    - trivy image --severity HIGH,CRITICAL "$REGISTRY_PATH/$IMAGE_NAME:latest"
   artifacts:
     reports:
-      container_scanning: gl-container-scanning-report-$IMAGE_NAME.json
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_PIPELINE_SOURCE == "push"
-      changes:
-        - images/**/*
+      container_scanning: "gl-container-scanning-report-$IMAGE_NAME.json"
+
+scan-terraform:
+  extends: [.scan_template, .terraform_rules]
+  variables: { IMAGE_NAME: "tf-runner" }
+  needs: ["build-terraform"]
+
+scan-ansible:
+  extends: [.scan_template, .ansible_rules]
+  variables: { IMAGE_NAME: "ansible-runner" }
+  needs: ["build-ansible"]
+
+scan-k8s:
+  extends: [.scan_template, .k8s_rules]
+  variables: { IMAGE_NAME: "k8s-deployer" }
+  needs: ["build-k8s"]
