@@ -10,11 +10,11 @@ variables:
 
 # Use Kaniko debug version with shell because GitLab runner can not run commands in containers without shell
 .kaniko_build_template:
+  tags:
+    - cluster-runner  
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
-  tags:
-    - cluster-runner  
   before_script:
     - mkdir -p /kaniko/.docker
     # Kaniko uses configuration file for auth in registry
