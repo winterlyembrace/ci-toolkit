@@ -20,10 +20,8 @@ WORKDIR /home/runner
 ARG ANSIBLE_VER=2.16.5
 
 # Install Ansible and linters
-RUN pip install --no-cache-dir --user \
-    ansible==${ANSIBLE_VER} \
-    ansible-lint \
-    yamllint
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Add path to pip-binaries in user PATH
 ENV PATH="/home/runner/.local/bin:${PATH}"
