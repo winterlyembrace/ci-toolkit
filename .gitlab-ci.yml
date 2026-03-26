@@ -8,15 +8,17 @@ variables:
   K8S_VERSION: "1.29.2"
   REGISTRY_PATH: $CI_REGISTRY_IMAGE
 
-# Use debug version with shell because GitLab runner can not run commands without shell
+# Use Kaniko debug version with shell because GitLab runner can not run commands in containers without shell
 .kaniko_build_template:
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   before_script:
+    - mkdir -p /kaniko/.docker
     # Kaniko uses configuration file for auth in registry
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(printf "%s:%s" "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
 
+# Build Terraform runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-terraform-kaniko:
   extends: .kaniko_build_template
   stage: build
@@ -36,28 +38,39 @@ build-terraform-kaniko:
         - images/terraform/**/*
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
+# Build Ansible runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-ansible:
-  extends: .build_template
+  extends: .kaniko_build_template
   stage: build
   script:
-    - docker build -t $CI_REGISTRY_IMAGE/ansible:latest ./images/ansible
-    - docker push $CI_REGISTRY_IMAGE/ansible:latest
+    - /kaniko/executor \
+      --context $CI_PROJECT_DIR/images/ansible \
+      --dockerfile $CI_PROJECT_DIR/images/ansible/Dockerfile \
+      --build-arg ANSIBLE_VER=$ANSIBLE_VERSION \
+      --destination $REGISTRY_PATH/ansible:latest \
+      --destination $REGISTRY_PATH/ansible:$ANSIBLE_VERSION \
+      --cache=true \
+      --cache-repo=$REGISTRY_PATH/ansible-cache
   rules:
     - changes:
         - images/ansible/**/*
+    - if: $CI_PIPELINE_SOURCE == "schedule"
 
+# Build K8s runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-k8s:
-  extends: .build_template
+  extends: .kaniko_build_template
   stage: build
   script:
-    - |
-      docker build \
-        --target k8s-stage \
-        --build-arg K8S_VER=$K8S_VERSION \
-        -t $REGISTRY_PATH/k8s-deployer:latest \
-        -t $REGISTRY_PATH/k8s-deployer:$K8S_VERSION \
-        -t $REGISTRY_PATH/k8s-deployer:$CI_COMMIT_SHORT_SHA .
-    - docker push $REGISTRY_PATH/k8s-deployer --all-tags
+    - /kaniko/executor \
+      --context $CI_PROJECT_DIR \
+      --dockerfile $CI_PROJECT_DIR/Dockerfile \
+      --target k8s-stage \
+      --build-arg K8S_VER=$K8S_VERSION \
+      --destination $REGISTRY_PATH/k8s-deployer:latest \
+      --destination $REGISTRY_PATH/k8s-deployer:$K8S_VERSION \
+      --destination $REGISTRY_PATH/k8s-deployer:$CI_COMMIT_SHORT_SHA \
+      --cache=true \
+      --cache-repo=$REGISTRY_PATH/k8s-cache
   rules:
     - changes:
         - images/k8s/**/*
@@ -68,9 +81,23 @@ security-scan:
   image: 
     name: aquasec/trivy:latest
     entrypoint: [""]
+  variables:
+    # Cache Trivy dependencies base (speed up scanning)
+    TRIVY_CACHE_DIR: ".trivycache/"
+  cache:
+    paths:
+      - .trivycache/
   script:
-    - trivy image --exit-code 1 --severity HIGH,CRITICAL $REGISTRY_PATH/tf-runner:latest
-    - trivy image --exit-code 1 --severity HIGH,CRITICAL $REGISTRY_PATH/k8s-deployer:latest
+    # 1. Generate detailed report in JSON format for GitLab
+    - trivy image --format template --template "@/contrib/gitlab.tpl" 
+        --output gl-container-scanning-report.json 
+        $REGISTRY_PATH/tf-runner:latest
+    # 2. Output a brief summary to the pipeline console (for the eyes)
+    - trivy image --severity HIGH,CRITICAL $REGISTRY_PATH/tf-runner:latest
+  artifacts:
+    reports:
+      container_scanning: gl-container-scanning-report.json
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
-
+    - changes:
+        - images/**/*
