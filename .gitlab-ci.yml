@@ -2,6 +2,7 @@ stages:
   - lint
   - build
   - scan
+  - update-infra-tools
 
 variables:
   TF_VER: "1.7.5"
@@ -9,29 +10,13 @@ variables:
   K8S_VER: "1.29.2"
   HADOLINT_VER: "2.12.0-debian"
 
-# Rule templates for stage trigger
-.terraform_rules:
+# Rules template for stage trigger
+.base_rules:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "push"
       changes:
-        - images/terraform/**/*
-    - if: $CI_PIPELINE_SOURCE == "web"
-
-.ansible_rules:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "push"
-      changes:
-        - images/ansible/**/*
-    - if: $CI_PIPELINE_SOURCE == "web"
-
-.k8s_rules:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "push"
-      changes:
-        - images/k8s/**/*
+        - images/$COMPONENT/**/*
     - if: $CI_PIPELINE_SOURCE == "web"
 
 # Common template for all lint stages
@@ -46,16 +31,19 @@ variables:
 lint-terraform:
   extends: [.lint_template, .terraform_rules]
   variables:
+    COMPONENT: "terraform"
     DOCKERFILE: "images/terraform/Dockerfile.tf-runner"
 
 lint-k8s:
   extends: [.lint_template, .k8s_rules]
   variables:
+    COMPONENT: "k8s"
     DOCKERFILE: "images/k8s/Dockerfile.k8s-deployer"
 
 lint-ansible:
   extends: [.lint_template, .ansible_rules]
   variables:
+    COMPONENT: "ansible"
     DOCKERFILE: "images/ansible/Dockerfile.ansible-runner"
 
 # Use Kaniko debug version with shell because GitLab runner can not run commands in containers without shell
@@ -160,3 +148,50 @@ scan-k8s:
   extends: [.scan_template, .k8s_rules]
   variables: { IMAGE_NAME: "k8s-deployer" }
   needs: ["build-k8s"]
+
+
+.update_template:
+  stage: update-infra-tools
+  image: alpine:3.19
+  before_script:
+    - apk add --no-cache git curl
+    - git config --global user.email "${GITLAB_USER_EMAIL}"
+    - git config --global user.name "${GITLAB_USER_NAME} (CI/CD Bot)"
+  script:
+    # 1. Clone infrastructure repository
+    - git clone https://oauth2:${INFRA_REPO_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_NAMESPACE}/k8s-infrastructure.git
+    - cd k8s-infrastructure
+    # 2. Change tool version in file
+    - sed -i "s/${VAR_NAME}=.*/${VAR_NAME}=${NEW_VERSION}/" versions.env
+    # 3. Push changes
+    - git add versions.env
+    - |
+      if git diff --cached --quiet; then
+        echo "No changes to commit"
+      else
+        git commit -m "Update ${VAR_NAME} to ${NEW_VERSION} [skip ci]"
+        git push origin main
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+update-tf-version:
+  extends: [.update_template, .terraform_rules]
+  needs: ["scan-terraform"]
+  variables:
+    VAR_NAME: "TF_RUNNER_VER"
+    NEW_VERSION: "$CI_COMMIT_SHORT_SHA"
+
+update-ansible-version:
+  extends: [.update_template, .ansible_rules]
+  needs: ["scan-ansible"]
+  variables:
+    VAR_NAME: "ANSIBLE_RUNNER_VER"
+    NEW_VERSION: "$CI_COMMIT_SHORT_SHA"
+
+update-k8s-version:
+  extends: [.update_template, .k8s_rules]
+  needs: ["scan-k8s"]
+  variables:
+    VAR_NAME: "K8S_DEPLOYER_VER"
+    NEW_VERSION: "$CI_COMMIT_SHORT_SHA"
