@@ -1,15 +1,47 @@
 stages:
+  - lint
   - build
   - scan
 
 variables:
-  TF_VERSION: "1.7.5"
-  ANSIBLE_VERSION: "2.16.5"
-  K8S_VERSION: "1.29.2"
-  REGISTRY_PATH: $CI_REGISTRY_IMAGE
+  TF_VER: "1.7.5"
+  ANSIBLE_VER: "2.16.5"
+  K8S_VER: "1.29.2"
+  HADOLINT_VER: "2.12.0-debian"
+
+.lint_template:
+  stage: lint
+  image: hadolint/hadolint:v$HADOLINT_VER
+  tags:
+    - cluster-runner
+  script:
+    - hadolint $DOCKERFILE
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - $DOCKERFILE
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+lint-terraform:
+  extends: .lint_template
+  stage: lint
+  variables:
+    DOCKERFILE: "images/terraform/Dockerfile.tf-runner"
+
+lint-k8s:
+  extends: .lint_template
+  stage: lint
+  variables:
+    DOCKERFILE: "images/k8s-deployer/Dockerfile.k8s-deployer"
+
+lint-ansible:
+  extends: .lint_template
+  stage: lint
+  variables:
+    DOCKERFILE: "images/ansible/Dockerfile.ansible-runner"
 
 # Use Kaniko debug version with shell because GitLab runner can not run commands in containers without shell
-.kaniko_build_template:
+.build_template:
   stage: build
   tags:
     - cluster-runner
@@ -25,11 +57,12 @@ variables:
   before_script:
     - mkdir -p /kaniko/.docker
     # Kaniko uses configuration file for auth in registry
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(printf "%s:%s" "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - echo "{\"auths\":{\"$IMAGE_REGISTRY\":{\"auth\":\"$(printf "%s:%s" "$REPO_USER" "$REPO_PASSWORD" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
 
 # Build Terraform runner image for main CI/CD pipeline in k8s-infrastructure repository
-build-terraform-kaniko:
-  extends: .kaniko_build_template
+build-terraform:
+  extends: .build_template
+  needs: ["lint-terraform"]
   script:
     - >
       /kaniko/executor
@@ -45,7 +78,8 @@ build-terraform-kaniko:
 
 # Build Ansible runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-ansible:
-  extends: .kaniko_build_template
+  extends: .build_template
+  needs: ["lint-ansible"]
   script:
     - >
       /kaniko/executor
@@ -60,7 +94,8 @@ build-ansible:
 
 # Build K8s runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-k8s:
-  extends: .kaniko_build_template
+  extends: .build_template
+  needs: ["lint-k8s"]
   script:
     - >
       /kaniko/executor
