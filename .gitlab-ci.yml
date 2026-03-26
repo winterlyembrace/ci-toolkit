@@ -11,7 +11,13 @@ variables:
 # Use Kaniko debug version with shell because GitLab runner can not run commands in containers without shell
 .kaniko_build_template:
   tags:
-    - cluster-runner  
+    - cluster-runner
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
+        - images/**/*
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -35,10 +41,6 @@ build-terraform-kaniko:
       --destination $REGISTRY_PATH/tf-runner:$CI_COMMIT_SHORT_SHA \
       --cache=true \
       --cache-repo=$REGISTRY_PATH/tf-cache
-  rules:
-    - changes:
-        - images/terraform/**/*
-    - if: $CI_PIPELINE_SOURCE == "schedule"
 
 # Build Ansible runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-ansible:
@@ -54,10 +56,6 @@ build-ansible:
       --destination $REGISTRY_PATH/ansible-runner:$CI_COMMIT_SHORT_SHA \
       --cache=true \
       --cache-repo=$REGISTRY_PATH/ansible-cache
-  rules:
-    - changes:
-        - images/ansible/**/*
-    - if: $CI_PIPELINE_SOURCE == "schedule"
 
 # Build K8s runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-k8s:
@@ -74,10 +72,7 @@ build-k8s:
       --destination $REGISTRY_PATH/k8s-deployer:$CI_COMMIT_SHORT_SHA \
       --cache=true \
       --cache-repo=$REGISTRY_PATH/k8s-cache
-  rules:
-    - changes:
-        - images/k8s/**/*
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+
 
 security-scan:
   stage: scan
@@ -104,5 +99,7 @@ security-scan:
       container_scanning: gl-container-scanning-report.json
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
-    - changes:
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "push"
+      changes:
         - images/**/*
