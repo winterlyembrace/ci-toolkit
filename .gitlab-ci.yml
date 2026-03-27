@@ -75,7 +75,7 @@ build-terraform:
       --destination $REGISTRY_PATH/tf-runner:latest
       --destination $REGISTRY_PATH/tf-runner:$TF_VER
       --destination $REGISTRY_PATH/tf-runner:$CI_COMMIT_SHORT_SHA
-      --cache=true
+  #   --cache=true
    #   --cache-repo=$REGISTRY_PATH/tf-cache
 
 # Build Ansible runner image for main CI/CD pipeline in k8s-infrastructure repository
@@ -111,7 +111,7 @@ build-k8s:
       --destination $REGISTRY_PATH/k8s-deployer:latest
       --destination $REGISTRY_PATH/k8s-deployer:$K8S_VER
       --destination $REGISTRY_PATH/k8s-deployer:$CI_COMMIT_SHORT_SHA
-      --cache=true
+   #   --cache=true
     #  --cache-repo=$REGISTRY_PATH/k8s-cache
 
 
