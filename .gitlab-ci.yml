@@ -73,8 +73,6 @@ build-terraform:
     GODEBUG: "http2client=0"
   script:
     - export GODEBUG=http2client=0
-    - ip addr 
-    - ip link set dev eth0 mtu 1400 || true
     - >
       /kaniko/executor
       --context $CI_PROJECT_DIR/images/terraform
@@ -83,8 +81,8 @@ build-terraform:
       --destination $REGISTRY_PATH/tf-runner:latest
       --destination $REGISTRY_PATH/tf-runner:$TF_VER
       --destination $REGISTRY_PATH/tf-runner:$CI_COMMIT_SHORT_SHA
-    #  --cache=true
-    #  --cache-repo=$REGISTRY_PATH/tf-cache
+      --cache=true
+      --cache-repo=$REGISTRY_PATH/tf-cache
 
 # Build Ansible runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-ansible:
@@ -113,8 +111,6 @@ build-k8s:
     GODEBUG: "http2client=0"
   script:
     - export GODEBUG=http2client=0
-    - ip addr 
-    - ip link set dev eth0 mtu 1400 || true
     - >
       /kaniko/executor
       --context $CI_PROJECT_DIR/images/k8s
@@ -123,8 +119,8 @@ build-k8s:
       --destination $REGISTRY_PATH/k8s-deployer:latest
       --destination $REGISTRY_PATH/k8s-deployer:$K8S_VER
       --destination $REGISTRY_PATH/k8s-deployer:$CI_COMMIT_SHORT_SHA
-    #  --cache=true
-    #  --cache-repo=$REGISTRY_PATH/k8s-cache
+      --cache=true
+      --cache-repo=$REGISTRY_PATH/k8s-cache
 
 #----------------------------Stage 3. Scan-----------------------------
 .scan_template:
