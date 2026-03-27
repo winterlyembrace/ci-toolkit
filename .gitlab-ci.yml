@@ -20,6 +20,8 @@ variables:
         - images/$COMPONENT/**/*
     - if: $CI_PIPELINE_SOURCE == "web"
 
+
+#----------------------------Stage 1. Lint-----------------------------
 # Common template for all lint stages
 .lint_template:
   stage: lint
@@ -47,14 +49,15 @@ lint-ansible:
     COMPONENT: "ansible"
     DOCKERFILE: "images/ansible/Dockerfile.ansible-runner"
 
+#----------------------------Stage 2. Build-----------------------------
 # Use Kaniko debug version with shell because GitLab runner can not run commands in containers without shell
 .build_template:
   stage: build
   tags:
     - cluster-runner
   image:
-    name: "gcr.io/kaniko-project/executor:v1.23.2-debug"
-    pull_policy: never
+  #  name: "gcr.io/kaniko-project/executor:v1.23.2-debug"
+    name: "kaniko-local:latest"
     entrypoint: [""]
   before_script:
     - mkdir -p /kaniko/.docker
@@ -115,7 +118,7 @@ build-k8s:
     #  --cache=true
     #  --cache-repo=$REGISTRY_PATH/k8s-cache
 
-
+#----------------------------Stage 3. Scan-----------------------------
 .scan_template:
   stage: scan
   image: 
@@ -163,7 +166,7 @@ scan-k8s:
     COMPONENT: "k8s"
   needs: ["build-k8s"]
 
-
+#----------------------------Stage 4. Update infra tools-----------------------------
 .update_template:
   stage: update-infra-tools
   image: alpine:3.19
