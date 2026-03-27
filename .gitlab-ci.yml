@@ -10,7 +10,6 @@ variables:
   K8S_VER: "1.29.2"
   HADOLINT_VER: "2.12.0-debian"
   TRIVY_VER: "0.49.1"
-  KANIKO_VER: "1.23.2"
 
 # Rules template for stage trigger
 .base_rules:
@@ -54,7 +53,7 @@ lint-ansible:
   tags:
     - cluster-runner
   image:
-    name: "gcr.io/kaniko-project/executor:v${KANIKO_VER}-debug"
+    name: "gcr.io/kaniko-project/executor:debug"
     entrypoint: [""]
   before_script:
     - mkdir -p /kaniko/.docker
