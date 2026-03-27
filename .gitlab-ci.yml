@@ -53,7 +53,8 @@ lint-ansible:
   tags:
     - cluster-runner
   image:
-    name: "gcr.io/kaniko-project/executor:debug"
+    name: "gcr.io/kaniko-project/executor:v1.23.2-debug"
+    pull_policy: never
     entrypoint: [""]
   before_script:
     - mkdir -p /kaniko/.docker
