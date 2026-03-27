@@ -71,6 +71,8 @@ build-terraform:
   variables:
     COMPONENT: "terraform"
   script:
+    - ip addr 
+    - ip link set dev eth0 mtu 1400 || true
     - >
       /kaniko/executor
       --context $CI_PROJECT_DIR/images/terraform
@@ -107,6 +109,8 @@ build-k8s:
   variables:
     COMPONENT: "k8s"
   script:
+    - ip addr 
+    - ip link set dev eth0 mtu 1400 || true
     - >
       /kaniko/executor
       --context $CI_PROJECT_DIR/images/k8s
