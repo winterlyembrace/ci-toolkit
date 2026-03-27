@@ -10,7 +10,7 @@ variables:
   K8S_VER: "1.29.2"
   HADOLINT_VER: "2.12.0-debian"
   TRIVY_VER: "0.49.1"
-  KANIKO_VER: "v1.23.2"
+  KANIKO_VER: "1.23.2"
 
 # Rules template for stage trigger
 .base_rules:
