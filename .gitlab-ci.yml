@@ -70,7 +70,9 @@ build-terraform:
   needs: ["lint-terraform"]
   variables:
     COMPONENT: "terraform"
+    GODEBUG: "http2client=0"
   script:
+    - export GODEBUG=http2client=0
     - ip addr 
     - ip link set dev eth0 mtu 1400 || true
     - >
@@ -108,7 +110,9 @@ build-k8s:
   needs: ["lint-k8s"]
   variables:
     COMPONENT: "k8s"
+    GODEBUG: "http2client=0"
   script:
+    - export GODEBUG=http2client=0
     - ip addr 
     - ip link set dev eth0 mtu 1400 || true
     - >
