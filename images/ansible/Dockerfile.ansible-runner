@@ -13,8 +13,6 @@ COPY requirements.txt .
 # Install Ansible and linters
 RUN python3 -m venv /opt/venv && \
 /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
-
-RUN ls /opt/venv/bin/
 ENV PATH="/opt/venv/bin:$PATH"
 
 # --- Stage 2: Final ---
@@ -38,11 +36,12 @@ RUN addgroup -g 1001 runner && \
     adduser -D -u 1001 -G runner runner && \
     chown -R runner:runner /opt/venv
 
-# Add path to venv-binaries in user PATH
-ENV PATH="/opt/venv/bin:$PATH"
-
+# Switch to new user
 USER 1001
 WORKDIR /home/runner
+
+# Add path to venv-binaries in user PATH
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Smoke test
 RUN ansible --version && ansible-lint --version
