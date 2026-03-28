@@ -5,7 +5,9 @@ FROM python:3.12.2-alpine3.19 AS builder
 RUN apk add --no-cache \
     build-base \
     libffi-dev \
-    openssl-dev
+    openssl-dev \
+    curl -SL https://releases.hashicorp.com/packer/1.10.2/packer_1.10.2_linux_amd64.zip -o packer.zip && \
+    unzip packer.zip 
 
 WORKDIR /home/runner
 COPY requirements.txt .
@@ -26,10 +28,11 @@ RUN apk add --no-cache \
     openssh-client \
     git \
     sshpass \
-    bash \
-    packer --repository=https://dl-cdn.alpinelinux.org/alpine/v3.19/community
+    bash 
+    
 
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /home/runner/packer /usr/local/bin/packer
 
 # Create group and user runner (UID 1001)
 RUN addgroup -g 1001 runner && \
