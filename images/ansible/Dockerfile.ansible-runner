@@ -26,7 +26,8 @@ RUN apk add --no-cache \
     openssh-client \
     git \
     sshpass \
-    bash
+    bash \
+    packer
 
 COPY --from=builder /opt/venv /opt/venv
 
@@ -42,6 +43,6 @@ USER 1001
 WORKDIR /home/runner
 
 # Smoke test
-RUN ansible --version && ansible-lint --version
+RUN ansible --version && ansible-lint --version && packer --version
 
 CMD ["/bin/sh"]

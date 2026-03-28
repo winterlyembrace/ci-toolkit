@@ -184,7 +184,7 @@ scan-k8s:
     - git clone https://oauth2:${INFRA_REPO_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_NAMESPACE}/k8s-infrastructure.git
     - cd k8s-infrastructure
     # 2. Change tool version in file
-    - yq -i ".variables.${VAR_NAME} = \"${NEW_VERSION}\"" ci-tools-versions.yml
+    - sed -i -E "s/(${VAR_NAME}:[[:space:]]*)\".*\"/\1\"${NEW_VERSION}\"/" ci-tools-versions.yml
     # 3. Push changes
     - git add ci-tools-versions.yml
     - |
