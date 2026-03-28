@@ -13,6 +13,8 @@ COPY requirements.txt .
 # Install Ansible and linters
 RUN python3 -m venv /opt/venv && \
 /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+
+RUN ls /opt/venv/bin/
 ENV PATH="/opt/venv/bin:$PATH"
 
 # --- Stage 2: Final ---
