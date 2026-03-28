@@ -1,15 +1,16 @@
 # --- Stage 1: Builder ---
 FROM python:3.12.2-alpine3.19 AS builder
 
+WORKDIR /home/runner
+
 # Install system dependencies for work with network and SSH
 RUN apk add --no-cache \
     build-base \
     libffi-dev \
-    openssl-dev \
+    openssl-dev && \
     curl -SL https://releases.hashicorp.com/packer/1.10.2/packer_1.10.2_linux_amd64.zip -o packer.zip && \
     unzip packer.zip 
 
-WORKDIR /home/runner
 COPY requirements.txt .
 
 # Install Ansible and linters
