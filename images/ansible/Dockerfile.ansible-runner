@@ -41,7 +41,10 @@ USER 1001
 WORKDIR /home/runner
 
 # Add path to venv-binaries in user PATH
+RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+
+RUN ls /opt/venv/bin
 
 # Smoke test
 RUN ansible --version && ansible-lint --version
