@@ -89,7 +89,9 @@ build-ansible:
   needs: ["lint-ansible"]
   variables:
     COMPONENT: "ansible"
+    GODEBUG: "http2client=0"
   script:
+    - export GODEBUG=http2client=0
     - >
       /kaniko/executor
       --context $CI_PROJECT_DIR/images/ansible
