@@ -1,52 +1,47 @@
 # --- Stage 1: Builder ---
-FROM python:3.12.2-alpine3.19 AS builder
+FROM python:3.12-slim-bookworm AS builder
 
 # Install system dependencies for work with network and SSH
-RUN apk add --no-cache \
-    build-base \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     libffi-dev \
-    openssl-dev
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /home/runner
+WORKDIR /build
 COPY requirements.txt .
 
 # Install Ansible and linters
-RUN python3 -m venv /opt/venv && \
-/opt/venv/bin/pip install --no-cache-dir -r requirements.txt
-ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # --- Stage 2: Final ---
-FROM alpine:3.19.1
+FROM python:3.12-slim-bookworm
 
 # Enable pipefail option to catch errors in piped commands
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
-# Install packages required for app run 
-RUN apk add --no-cache \
-    python3 \
-    libc6-compat \
+# Install runtime utilities for CI/CD tasks (SSH, Git, and networking)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     git \
     sshpass \
-    bash
+    bash \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /opt/venv /opt/venv
+# Copy the pre-installed Python packages from the builder stage.
+# Placing them in /usr/local makes binaries automatically available in $PATH.
+COPY --from=builder /install /usr/local
 
-# Create group and user runner (UID/GID 1001)
-RUN addgroup -g 1001 runner && \
-    adduser -D -u 1001 -G runner runner && \
-    chown -R runner:runner /opt/venv
+# Create a non-privileged user 'runner' to comply with security best practices.
+# Using UID/GID 1001 to match standard CI/CD runner configurations.
+RUN groupadd -g 1001 runner && \
+    useradd -m -u 1001 -g runner runner
 
-# Switch to new user
+# Set the working directory and switch to the non-root user.
 USER 1001
 WORKDIR /home/runner
 
-# Add path to venv-binaries in user PATH
-ENV PATH="/opt/venv/bin:$PATH"
-
-RUN ls /opt/venv/bin
-
-# Smoke test
+# Smoke test: Verify that Ansible and the linter are installed and executable.
 RUN ansible --version && ansible-lint --version
 
-CMD ["/bin/sh"]
+CMD ["/bin/bash"]
