@@ -16,13 +16,14 @@ RUN python3 -m venv /opt/venv && \
 ENV PATH="/opt/venv/bin:$PATH"
 
 # --- Stage 2: Final ---
-FROM python:3.12.2-alpine3.19
+FROM alpine:3.19.1
 
 # Enable pipefail option to catch errors in piped commands
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
 # Install packages required for app run 
 RUN apk add --no-cache \
+    python3 \
     openssh-client \
     git \
     sshpass \
@@ -39,6 +40,7 @@ RUN addgroup -g 1001 runner && \
 ENV PATH="/opt/venv/bin:$PATH"
 
 USER 1001
+WORKDIR /home/runner
 
 # Smoke test
 RUN ansible --version && ansible-lint --version

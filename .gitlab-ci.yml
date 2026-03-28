@@ -25,7 +25,7 @@ variables:
 # Common template for all lint stages
 .lint_template:
   stage: lint
-  image: hadolint/hadolint:v$HADOLINT_VER
+  image: "hadolint/hadolint:v${HADOLINT_VER}"
   tags:
     - cluster-runner
   script:
@@ -56,8 +56,7 @@ lint-ansible:
   tags:
     - cluster-runner
   image:
-  #  name: "gcr.io/kaniko-project/executor:v1.23.2-debug"
-    name: "kaniko-local:latest"
+    name: "gcr.io/kaniko-project/executor:v1.23.2-debug"
     entrypoint: [""]
   before_script:
     - mkdir -p /kaniko/.docker
@@ -183,9 +182,9 @@ scan-k8s:
     - git clone https://oauth2:${INFRA_REPO_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_NAMESPACE}/k8s-infrastructure.git
     - cd k8s-infrastructure
     # 2. Change tool version in file
-    - sed -i "s/${VAR_NAME}=.*/${VAR_NAME}=${NEW_VERSION}/" versions.env
+    - yq -i ".variables.${VAR_NAME} = \"${NEW_VERSION}\"" ci-tools-versions.yml
     # 3. Push changes
-    - git add versions.env
+    - git add ci-tools-versions.yml
     - |
       if git diff --cached --quiet; then
         echo "No changes to commit"
