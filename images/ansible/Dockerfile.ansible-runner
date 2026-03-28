@@ -2,6 +2,7 @@
 FROM python:3.12-slim-bookworm AS builder
 
 # Install system dependencies for work with network and SSH
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libffi-dev \
@@ -21,6 +22,7 @@ FROM python:3.12-slim-bookworm
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
 # Install runtime utilities for CI/CD tasks (SSH, Git, and networking)
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     git \
