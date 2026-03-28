@@ -46,6 +46,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN ls /opt/venv/bin
 
 # Smoke test
-RUN ansible --version && ansible-lint --version
+RUN /opt/venv/bin/ansible --version && /opt/venv/bin/ansible-lint --version
 
 CMD ["/bin/sh"]
