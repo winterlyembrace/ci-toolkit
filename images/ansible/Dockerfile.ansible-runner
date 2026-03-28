@@ -1,49 +1,47 @@
 # --- Stage 1: Builder ---
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12.2-alpine3.19 AS builder
 
 # Install system dependencies for work with network and SSH
-# hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+RUN apk add --no-cache \
+    build-base \
     libffi-dev \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+    openssl-dev
 
-WORKDIR /build
+WORKDIR /home/runner
 COPY requirements.txt .
 
 # Install Ansible and linters
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN python3 -m venv /opt/venv && \
+/opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+ENV PATH="/opt/venv/bin:$PATH"
 
 # --- Stage 2: Final ---
-FROM python:3.12-slim-bookworm
+FROM python:3.12.2-alpine3.19
 
 # Enable pipefail option to catch errors in piped commands
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
-# Install runtime utilities for CI/CD tasks (SSH, Git, and networking)
-# hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install packages required for app run 
+RUN apk add --no-cache \
     openssh-client \
     git \
     sshpass \
-    bash \
-    && rm -rf /var/lib/apt/lists/*
+    bash
 
-# Copy the pre-installed Python packages from the builder stage.
-# Placing them in /usr/local makes binaries automatically available in $PATH.
-COPY --from=builder /install /usr/local
+COPY --from=builder /opt/venv /opt/venv
 
-# Create a non-privileged user 'runner' to comply with security best practices.
-# Using UID/GID 1001 to match standard CI/CD runner configurations.
-RUN groupadd -g 1001 runner && \
-    useradd -m -u 1001 -g runner runner
+# Create group and user runner (UID/GID 1001)
+RUN addgroup -g 1001 runner && \
+    adduser -D -u 1001 -G runner runner && \
+    chown -R runner:runner /opt/venv
 
-# Set the working directory and switch to the non-root user.
+# Add path to venv-binaries in user PATH
+ENV PATH="/opt/venv/bin:$PATH"
+
 USER 1001
 WORKDIR /home/runner
 
-# Smoke test: Verify that Ansible and the linter are installed and executable.
+# Smoke test
 RUN ansible --version && ansible-lint --version
 
-CMD ["/bin/bash"]
+CMD ["/bin/sh"]
