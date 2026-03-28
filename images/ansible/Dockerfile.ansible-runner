@@ -27,7 +27,7 @@ RUN apk add --no-cache \
     git \
     sshpass \
     bash \
-    packer
+    packer --repository=https://dl-cdn.alpinelinux.org/alpine/v3.19/community
 
 COPY --from=builder /opt/venv /opt/venv
 
