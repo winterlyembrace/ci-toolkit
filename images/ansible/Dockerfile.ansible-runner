@@ -24,6 +24,7 @@ SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 # Install packages required for app run 
 RUN apk add --no-cache \
     python3 \
+    libc6-compat \
     openssh-client \
     git \
     sshpass \
@@ -46,6 +47,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN ls /opt/venv/bin
 
 # Smoke test
-RUN /opt/venv/bin/ansible --version && /opt/venv/bin/ansible-lint --version
+RUN ansible --version && ansible-lint --version
 
 CMD ["/bin/sh"]
