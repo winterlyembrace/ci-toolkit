@@ -98,8 +98,8 @@ build-ansible:
       --destination $REGISTRY_PATH/ansible-runner:latest
       --destination $REGISTRY_PATH/ansible-runner:$ANSIBLE_VER
       --destination $REGISTRY_PATH/ansible-runner:$CI_COMMIT_SHORT_SHA
-      --cache=true
-      --cache-repo=$REGISTRY_PATH/ansible-cache
+    #  --cache=true
+    #  --cache-repo=$REGISTRY_PATH/ansible-cache
 
 # Build K8s runner image for main CI/CD pipeline in k8s-infrastructure repository
 build-k8s:
