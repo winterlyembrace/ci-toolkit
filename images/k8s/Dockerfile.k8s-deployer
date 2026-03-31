@@ -8,14 +8,12 @@ SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 ARG KUBECTL_VERSION=1.29.2
 ARG HELM_VERSION=3.14.2
 
-RUN apk add --no-cache curl
-
+RUN apk add --no-cache curl && \
 # 1. Download kubectl
-RUN curl -LO "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" && \
-    chmod +x kubectl && mv kubectl /usr/local/bin/
-
+    curl -LO "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" && \
+    chmod +x kubectl && mv kubectl /usr/local/bin/ && \
 # 2. Download Helm
-RUN curl -sLO "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" && \
+    curl -sLO "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" && \
     tar -xzf helm-v${HELM_VERSION}-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/local/bin/ && \
     rm -rf linux-amd64 helm-v${HELM_VERSION}-linux-amd64.tar.gz
