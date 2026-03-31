@@ -45,11 +45,13 @@ RUN addgroup -g 1001 runner && \
 
 # Add path to venv-binaries in user PATH
 ENV PATH="/opt/venv/bin:$PATH"
+ENV ANSIBLE_COLLECTIONS_PATH="/opt/venv/share/ansible/collections"
 
 USER 1001
 WORKDIR /home/runner
 
 # Smoke test
 RUN ansible --version && ansible-lint --version && packer --version
+RUN ansible-galaxy collection list | grep ansible.posix
 
 CMD ["/bin/sh"]
