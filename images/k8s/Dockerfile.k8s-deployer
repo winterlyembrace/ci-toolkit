@@ -36,8 +36,8 @@ RUN apk add --no-cache \
     sshpass
 
 RUN pip3 install --no-cache-dir --break-system-packages \
-    kubernetes \ 
-    pyyaml
+    kubernetes==29.2.0 \ 
+    pyyaml==6.0.1
 
 # Create group and user runner (UID/GID 1001)
 RUN addgroup -g 1001 runner && \
