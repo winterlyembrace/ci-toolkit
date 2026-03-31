@@ -33,7 +33,7 @@ RUN apk add --no-cache \
     openssh-client \
     sshpass && \
     pip3 install --no-cache-dir --break-system-packages \
-    kubernetes==29.2.0 \ 
+    kubernetes==29.0.0 \ 
     pyyaml==6.0.1 && \
     addgroup -g 1001 runner && \
     adduser -D -u 1001 -G runner runner
