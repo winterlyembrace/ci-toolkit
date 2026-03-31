@@ -31,7 +31,8 @@ RUN apk add --no-cache \
     openssh-client \
     git \
     sshpass \
-    bash 
+    bash \
+    jq
 
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /home/runner/packer /usr/local/bin/packer
