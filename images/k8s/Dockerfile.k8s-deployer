@@ -26,11 +26,18 @@ FROM alpine:3.19.1
 # Install basic utilities
 RUN apk add --no-cache \
     bash \
-    curl \
-    git \
-    openssl \
     gettext \
-    jq
+    jq \
+    ca-certificates \
+    python3 \
+    py3-pip \
+    ansible \
+    openssh-client \
+    sshpass
+
+RUN pip3 install --no-cache-dir --break-system-packages \
+    kubernetes \ 
+    pyyaml
 
 # Create group and user runner (UID/GID 1001)
 RUN addgroup -g 1001 runner && \
@@ -47,6 +54,6 @@ WORKDIR /home/runner
 RUN mkdir -p /home/runner/.kube
 
 # Smoke test
-RUN kubectl version --client && helm version --client
+RUN kubectl version --client && helm version --client && ansible --version
 
-CMD ["/bin/sh"]
+CMD ["/bin/bash"]

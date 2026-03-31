@@ -1,8 +1,5 @@
 FROM python:3.12.2-alpine3.19 AS builder
 
-# Enable pipefail option to catch errors in piped commands
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-
 RUN apk add --no-cache curl unzip bash
 
 # 1. Install Terraform
@@ -22,6 +19,9 @@ RUN curl -sLO https://github.com/aquasecurity/tfsec/releases/latest/download/tfs
 
 # Final image
 FROM alpine:3.19.1
+
+# Enable pipefail option to catch errors in piped commands
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
 # Create group and user runner (UID/GID 1001)
 RUN addgroup -g 1001 runner && \
