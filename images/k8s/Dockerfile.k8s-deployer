@@ -33,15 +33,13 @@ RUN apk add --no-cache \
     py3-pip \
     ansible \
     openssh-client \
-    sshpass
-
-RUN pip3 install --no-cache-dir --break-system-packages \
+    sshpass && \
+    pip3 install --no-cache-dir --break-system-packages \
     kubernetes==29.2.0 \ 
-    pyyaml==6.0.1
-
-# Create group and user runner (UID/GID 1001)
-RUN addgroup -g 1001 runner && \
+    pyyaml==6.0.1 && \
+    addgroup -g 1001 runner && \
     adduser -D -u 1001 -G runner runner
+# Create group and user runner (UID/GID 1001)
 
 # Copy binaries from builder-layer
 COPY --from=builder /usr/local/bin/kubectl /usr/local/bin/kubectl
