@@ -198,7 +198,7 @@ scan-k8s:
     - if: $CI_COMMIT_BRANCH == "main"
 
 update-tf-version:
-  extends: [.update_template, .base_rules]
+  extends: [.update_template]
   needs: ["scan-terraform"]
   variables:
     COMPONENT: "terraform"
@@ -206,7 +206,7 @@ update-tf-version:
     NEW_VERSION: "$CI_COMMIT_SHORT_SHA"
 
 update-ansible-version:
-  extends: [.update_template, .base_rules]
+  extends: [.update_template]
   needs: ["scan-ansible"]
   variables:
     COMPONENT: "ansible"
@@ -214,7 +214,7 @@ update-ansible-version:
     NEW_VERSION: "$CI_COMMIT_SHORT_SHA"
 
 update-k8s-version:
-  extends: [.update_template, .base_rules]
+  extends: [.update_template]
   needs: ["scan-k8s"]
   variables:
     COMPONENT: "k8s"
