@@ -14,11 +14,12 @@ RUN apk add --no-cache \
     unzip packer.zip 
 
 COPY requirements.txt .
+COPY requirements.yml .
 
 # Install Ansible and linters
 RUN python3 -m venv /opt/venv && \
 /opt/venv/bin/pip install --no-cache-dir -r requirements.txt && \
-/opt/venv/bin/ansible-galaxy collection install ansible.posix -p /opt/venv/share/ansible/collections
+/opt/venv/bin/ansible-galaxy collection install -r requirements.yml -p /opt/venv/share/ansible/collections
 ENV PATH="/opt/venv/bin:$PATH"
 
 # --- Stage 2: Final ---
