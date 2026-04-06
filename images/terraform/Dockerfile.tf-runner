@@ -1,5 +1,7 @@
 FROM python:3.12.2-alpine3.19 AS builder
 
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+
 RUN apk add --no-cache curl unzip bash
 
 # 1. Install Terraform
