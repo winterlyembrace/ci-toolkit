@@ -22,7 +22,7 @@ By using pre-built, specialized images instead of installing dependencies during
 
 To ensure production-grade security, this repository implements:
 
-    User Isolation: USER "user" is defined in all Dockerfiles.
+    User Isolation: USER "runner" is defined in all Dockerfiles.
 
     Automated Scanning: Images are scanned weekly for vulnerabilities using Trivy.
 
